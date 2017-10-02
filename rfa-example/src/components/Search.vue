@@ -3,17 +3,75 @@
     <v-layout row wrap>
       <v-flex xs12>
         <v-form ref="form" class="findProperty" v-on:submit="findProperty">
-          <div class="datePicker checkIn">
-            <div class="label">Check In</div>
-            <v-date-picker label="Check In" v-model="checkIn"></v-date-picker>
-          </div>
 
-          <div class="datePicker checkOut">
-            <div class="label">Check Out</div>
-            <v-date-picker v-model="checkOut"></v-date-picker>
-          </div>
-          <v-btn class="submit light-blue darken-1"@click="findProperty">Search Availability</v-btn>
-          <v-btn @click="clear">clear</v-btn>
+          <v-flex xs12 sm6 md3 as-item>
+            <v-menu
+              lazy
+              :close-on-content-click="false"
+              v-model="checkInMenu"
+              transition="scale-transition"
+              offset-y
+              full-width
+              :nudge-left="40"
+              max-width="290px"
+              xs12 sm3
+            >
+            <v-text-field
+              slot="activator"
+              label="Check-In"
+              v-model="checkIn"
+              prepend-icon="event"
+              readonly
+              ></v-text-field>
+              <v-date-picker v-model="checkIn" no-title scrollable actions>
+                <template scope="{ save, cancel }">
+                  <v-card-actions>
+                    <v-btn flat primary @click.native="cancel()">Cancel</v-btn>
+                    <v-btn flat primary @click.native="save()">Save</v-btn>
+                  </v-card-actions>
+                </template>
+              </v-date-picker>
+            </v-menu>
+          </v-flex>
+
+          <v-flex xs12 sm6 md3 as-item>
+            <v-menu
+              lazy
+              :close-on-content-click="false"
+              v-model="checkOutMenu"
+              transition="scale-transition"
+              offset-y
+              full-width
+              :nudge-left="40"
+              max-width="290px"
+              xs12 sm3
+            >
+            <v-text-field
+              slot="activator"
+              label="Check-Out"
+              v-model="checkOut"
+              prepend-icon="event"
+              readonly
+              xs12 sm3
+            ></v-text-field>
+            <v-date-picker v-model="checkOut" no-title scrollable actions>
+              <template scope="{ save, cancel }">
+                <v-card-actions>
+                  <v-btn flat primary @click.native="cancel()">Cancel</v-btn>
+                  <v-btn flat primary @click.native="save()">Save</v-btn>
+                </v-card-actions>
+              </template>
+            </v-date-picker>
+          </v-menu>
+          </v-flex>
+
+          <v-flex xs12 sm6 md3 as-item>
+            <v-btn class="submit light-blue darken-1"@click="findProperty">Search Availability</v-btn>
+          </v-flex>
+
+          <v-flex xs12 sm6 md3 as-item>
+            <v-btn @click="clear">clear</v-btn>
+          </v-flex>
         </v-form>
       </v-flex>
       <v-flex style="padding:6px" d-flex xs12 sm6 md4 v-for="property in properties">
@@ -39,9 +97,10 @@
       return {
         properties: [],
         propertyId: '',
-        checkIn: new Date(),
-        checkOut: new Date(),
-        menu: false,
+        checkIn: '',
+        checkOut: '',
+        checkInMenu: false,
+        checkOutMenu: false,
       };
     },
     created: function () {
@@ -54,10 +113,9 @@
         var start = new Date(this.checkIn);
         var end = new Date(this.checkOut);
         //Filter.
-        if (start && end) {
+        if (this.checkIn && this.checkOut) {
           start = moment(start).format('YYYY-MM-DD');
           end = moment(end).format('YYYY-MM-DD');
-          //bat_start_date=2017-10-11&bat_end_date=2017-10-14
           this.$http.get(apiURL + '?bat_start_date=' + start + '&bat_end_date=' + end).then(function(response){
             this.properties = response.data;
           });
@@ -72,9 +130,6 @@
       clear () {
         this.$refs.form.reset()
         this.findProperty()
-      },
-      moment: function () {
-        return moment();
       }
     }
   }
@@ -82,6 +137,10 @@
 </script>
 
 <style>
+  .as-item {
+    padding: 10px;
+    width: 100%;
+  }
   .datePicker {
     display: inline-block;
     float: left;
@@ -98,8 +157,8 @@
     margin-bottom: 40px;
     background: #ececec;
     padding: 10px;
-    display: inline-block;
     width: 100%;
+    display: flex;
   }
   .findProperty .submit {
     color: white;
