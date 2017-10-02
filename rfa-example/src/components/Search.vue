@@ -1,109 +1,127 @@
 <template>
   <div id="app">
-    <ais-index :search-store="searchStore" index-name="Properties">
-      <ais-search-box  class="form-search-property" placeholder="Find a property..." :search-store="searchStore">
-      </ais-search-box>
+    <v-layout row wrap>
+      <v-flex xs12>
+        <v-form ref="form" class="findProperty" v-on:submit="findProperty">
+          <div class="datePicker checkIn">
+            <div class="label">Check In</div>
+            <v-date-picker label="Check In" v-model="checkIn"></v-date-picker>
+          </div>
 
-      <v-layout row wrap>
-      <!-- Sidebar with facets -->
-        <v-flex xs12 md3>
-          <!-- Amenities Facet -->
-          <ais-refinement-list attribute-name="field_sp_amenities" :class-names="{
-            'ais-refinement-list__item': 'checkbox'
-            }">
-            <div class="facet-label" slot="header"><strong>Amenities</strong></div>
-          </ais-refinement-list>
-
-          <!-- Area Facet -->
-          <ais-refinement-list attribute-name="field_sp_area" :class-names="{
-            'ais-refinement-list__item': 'checkbox'
-            }">
-            <div class="facet-label" slot="header"><strong>Area</strong></div>
-          </ais-refinement-list>
-        </v-flex>
-
-        <!-- Content -->
-        <v-flex xs12 md9>
-          <ais-results inline-template>
-            <table class="properties">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Area</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="result in results" :key="result.objectID">
-                  <td><strong>{{ result.name }}</strong></td>
-                  <td>{{ result.field_sp_short_description }}</td>
-                  <td>
-                    <span v-for="area in result.field_sp_area" :key="result.objectID">
-                      {{ area }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </ais-results>
-        </v-flex>
-      </v-layout>
-    </ais-index>
+          <div class="datePicker checkOut">
+            <div class="label">Check Out</div>
+            <v-date-picker v-model="checkOut"></v-date-picker>
+          </div>
+          <v-btn class="submit light-blue darken-1"@click="findProperty">Search Availability</v-btn>
+          <v-btn @click="clear">clear</v-btn>
+        </v-form>
+      </v-flex>
+      <v-flex style="padding:6px" d-flex xs12 sm6 md4 v-for="property in properties">
+        <v-card class="property grey lighten-3">
+          <v-card-text>
+            <div class="name"> {{property.name}} </div>
+            <div class="description">{{property.field_sp_short_description}} </div>
+            <img :src = "property.field_sp_featured_image.src" />
+          </v-card-text>
+        </v-card>
+      </v-flex>
+    </v-layout>
   </div>
 </template>
 
 <script>
-  import { createFromAlgoliaCredentials } from 'vue-instantsearch';
+  import moment from 'moment';
+  var apiURL = 'https://vuejs-o2rgq6a-y6sjsg6j57eww.eu.platform.sh/available-properties';
 
   export default {
     name: 'search',
     data: function() {
       return {
-        searchStore: createFromAlgoliaCredentials('2KLSFYS1HX', '557e70f6151f1073e2b4572d64bcc866'),
+        properties: [],
+        propertyId: '',
+        checkIn: new Date(),
+        checkOut: new Date(),
+        menu: false,
       };
     },
+    created: function () {
+      this.$http.get(apiURL).then(function(response){
+        this.properties = response.data;
+      })
+    },
+    methods: {
+      findProperty: function(e) {
+        var start = new Date(this.checkIn);
+        var end = new Date(this.checkOut);
+        //Filter.
+        if (start && end) {
+          start = moment(start).format('YYYY-MM-DD');
+          end = moment(end).format('YYYY-MM-DD');
+          //bat_start_date=2017-10-11&bat_end_date=2017-10-14
+          this.$http.get(apiURL + '?bat_start_date=' + start + '&bat_end_date=' + end).then(function(response){
+            this.properties = response.data;
+          });
+        }
+        // Get all properties.
+        else {
+          this.$http.get(apiURL).then(function(response){
+            this.properties = response.data;
+          })
+        }
+      },
+      clear () {
+        this.$refs.form.reset()
+        this.findProperty()
+      },
+      moment: function () {
+        return moment();
+      }
+    }
   }
+
 </script>
 
 <style>
-
+  .datePicker {
+    display: inline-block;
+    float: left;
+    margin-right: 40px; 
+    margin-bottom: 40px;
+  }
+  .datePicker label {
+    font-size: 20px;
+  }
+  .date {
+    margin-bottom: 40px;
+  }
+  .findProperty {
+    margin-bottom: 40px;
+    background: #ececec;
+    padding: 10px;
+    display: inline-block;
+    width: 100%;
+  }
+  .findProperty .submit {
+    color: white;
+  }
+  .property .name {
+    font-size: 26px;
+    font-weight: 500;
+  }
+  .property {
+    min-height: 250px;
+    padding: 15px;
+  }
+  .property .description {
+    font-weight: 300;
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+  .property img {
+    width: 100%;
+  }
   body {
     font-size: 16px;
   }
-  table.properties {
-    background: #fff;
-    padding: 10px;
-    border: 1px solid #dfdfdf;
-  }
-  table.properties th {
-    text-align: left;
-    padding: 10px 25px;
-    text-transform: uppercase;
-    border-bottom: 1px solid #dfdfdf;
-  }
-  table.properties td {
-    padding: 10px 25px;
-    vertical-align: middle;
-  }
-  .form-search-property {
-    padding: 10px;
-    margin-bottom: 20px;
-  }
-  .form-search-property input {
-    border-bottom: 1px solid #dfdfdf;
-    margin-right: 10px;
-    padding: 0px;
-  }
-  .form-search-property button {
-    margin-right: 10px;
-  }
-  .ais-refinement-list {
-    margin-bottom: 25px;
-  }
-  .ais-refinement-list .facet-label {
-    margin-bottom: 6px;
-  }
-  .ais-refinement-list .checkbox input {
-    margin-right: 8px;
-  }
+
 </style>
