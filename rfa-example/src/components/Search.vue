@@ -84,15 +84,23 @@
         </v-card>
       </v-flex>
     </v-layout>
+
+    <!-- Print a map -->
+    <geo-map :markers="markers" :center="center"></geo-map>
+
   </div>
 </template>
 
 <script>
   import moment from 'moment';
+  import GeoMap from './GeoMap';
   var apiURL = 'https://vuejs-o2rgq6a-y6sjsg6j57eww.eu.platform.sh/available-properties';
 
   export default {
     name: 'search',
+    components: {
+      GeoMap
+    },
     data: function() {
       return {
         properties: [],
@@ -101,11 +109,19 @@
         checkOut: '',
         checkInMenu: false,
         checkOutMenu: false,
+        center: [],
+        markers: [],
       };
     },
     created: function () {
       this.$http.get(apiURL).then(function(response){
         this.properties = response.data;
+        for (var key in this.properties) {
+          var coordinates = this.properties[key].field_sp_location.split(",");
+          coordinates = {'position' : {'lat': parseFloat(coordinates[0]),'lng': parseFloat(coordinates[1])}};
+          this.markers.push(coordinates);
+        }
+        this.center = {'lat': this.markers[0].position.lat, 'lng': this.markers[0].position.lng}
       })
     },
     methods: {
