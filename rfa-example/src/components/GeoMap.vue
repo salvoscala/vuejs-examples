@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="geo-map">
     <gmap-map
       :center="center"
       :zoom="7"
@@ -24,14 +24,10 @@
     components: {
       name: 'GeoMap',
     },
-    data: function() {
-      return {
-        msg: 'pippo',
-      }
-    },
     props: [
       'markers',
       'center',
-    ]
+    ],
   }
+
 </script>

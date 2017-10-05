@@ -7,6 +7,7 @@ import './stylus/main.styl'
 import App from './App'
 import Search from './components/Search'
 import GeoMap from './components/GeoMap'
+import Properties from './components/Properties'
 import router from './router'
 import Datepicker from 'vuejs-datepicker'
 import Moment from "moment"
@@ -34,5 +35,5 @@ new Vue({
   el: '#app',
   router,
   template: '<App/>',
-  components: { App, Search, GeoMap, Datepicker, Moment, VueMomentJS }
+  components: { App, Search, GeoMap, Properties, Datepicker, Moment, VueMomentJS }
 })
