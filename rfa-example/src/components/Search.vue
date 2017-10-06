@@ -22,6 +22,7 @@
               v-model="checkIn"
               prepend-icon="event"
               readonly
+              required
               ></v-text-field>
               <v-date-picker v-model="checkIn" no-title scrollable actions>
                 <template scope="{ save, cancel }">
@@ -52,7 +53,7 @@
               v-model="checkOut"
               prepend-icon="event"
               readonly
-              xs12 sm3
+              required
             ></v-text-field>
             <v-date-picker v-model="checkOut" no-title scrollable actions>
               <template scope="{ save, cancel }">
@@ -66,7 +67,7 @@
           </v-flex>
 
           <v-flex xs12 sm6 md3 as-item>
-            <v-btn class="submit light-blue darken-1"@click="findProperty">Search Availability</v-btn>
+            <v-btn class="submit light-blue darken-1" @click="findProperty">Search Availability</v-btn>
           </v-flex>
 
           <v-flex xs12 sm6 md3 as-item>
@@ -74,20 +75,24 @@
           </v-flex>
         </v-form>
       </v-flex>
+    </v-layout>
 
-      <v-flex d-flex xs12>
+    <v-layout row wrap>
+      <v-flex flex xs12 md4>
         <div class="facets" v-for="facetType in facets">
           <div class="facetType">
-            <h2>FACET TYPE</h2>
-            <div class="facets" v-for="facetLink in facetType">
-              <v-btn @click="clickedFacet(facetLink.link)"> {{ facetLink.title }} </v-btn>
+            <h4>{{facetType.label}}</h4>
+            <div class="facets" v-for="facetLink in facetType.links">
+              <v-btn small primary color="primary" @click="clickedFacet(facetLink.link)"> {{ facetLink.title }} </v-btn>
             </div>
           </div>
         </div>
       </v-flex>
 
-       <!-- Print a list of properties -->
-      <properties :properties="properties"></properties>
+      <v-flex flex xs12 md8>
+        <!-- Print a list of properties -->
+        <properties :properties="properties"></properties>
+      </v-flex>
 
     </v-layout>
 
@@ -142,6 +147,7 @@
           this.$http.get(apiURL + '?bat_start_date=' + start + '&bat_end_date=' + end).then(function(response) {
             this.properties = response.data.results;
             this.updatesMarkers();
+            this.createFacets(response.data.facets);
           });
         }
         // Get all properties.
@@ -170,6 +176,16 @@
       createFacets (responseFacets) {
         for (var type in responseFacets) {
           this.facets[type] = {};
+          this.facets[type]['links'] = {};
+          if (type === 'field_sp_area') {
+            this.facets[type]['label'] = 'Area';
+          }
+          else if (type === 'property_bat_type_reference:field_st_amenities') {
+            this.facets[type]['label'] = 'Amenities';
+          }
+          else {
+            this.facets[type]['label'] = type;
+          }
           for (var key in responseFacets[type]) {
             var facetUrl = responseFacets[type][key].split('<a href="').pop();
             facetUrl = '<a href="' + siteUrl + facetUrl;
@@ -184,7 +200,7 @@
               $(el).find('a').text($(el).text());
             }
 
-            this.facets[type][key] = {'link': $(el).find('a').attr('href'), 'title': $(el).find('a').text()};
+            this.facets[type]['links'][key] = {'link': $(el).find('a').attr('href'), 'title': $(el).find('a').text()};
           }
         }
         console.log(this.facets);
@@ -230,26 +246,45 @@
   .findProperty .submit {
     color: white;
   }
+  .property .details {
+    padding: 25px;
+  }
+  .property .item {
+    margin-bottom: 6px;
+  }
   .property .name {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 500;
-    margin-bottom: 10px;
+    text-transform: uppercase;
+    color: #1976d2;
+  }
+  .property .area {
+    font-size: 12px;
+    color: #6c6c6c;
   }
   .property {
     min-height: 360px;
-    padding: 25px;
+    padding: 0px;
   }
   .property .description {
     font-weight: 300;
-    margin-bottom: 10px;
     font-style: italic;
   }
   .property img {
     width: 100%;
-    margin-bottom: 10px;
   }
   body {
     font-size: 16px;
+  }
+  .facetType {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 30px;
+    padding: 25px;
+  }
+  .facets button {
+    display: inline-block;
+    float: left;
   }
 
 </style>
